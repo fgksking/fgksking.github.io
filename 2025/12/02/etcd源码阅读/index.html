@@ -28,7 +28,7 @@
 <meta property="og:description" content="之前学习MIT6.824课程的时候学习了raft算法，上篇也对raft算法做了一些简要的概括，但是工业界Raft的实现往往比教学的更加复杂，在性能、可用性在有着更高的要求，因此带着一些好奇心整理了一下etcd中raft的实现。 etcd的raft实现地址https:&#x2F;&#x2F;github.com&#x2F;etcd-io&#x2F;raft 与MIT6.824给出的raft相比，etcd有以下不一样的地方： 状态机架构：单">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2025-12-02T14:25:21.000Z">
-<meta property="article:modified_time" content="2025-12-03T06:38:12.518Z">
+<meta property="article:modified_time" content="2025-12-03T06:46:18.113Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="共识算法">
 <meta name="twitter:card" content="summary">
@@ -154,8 +154,8 @@
     <div class="widget">
       <h3 class="widget-title">分类</h3>
       <div class="category-box">
-            <a class="category-link" href="/categories/%E5%85%B6%E4%BB%96/">
-                其他
+            <a class="category-link" href="/categories/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/">
+                源码阅读
                 <div class="category-count">1</div>
             </a>
         
@@ -164,8 +164,8 @@
                 <div class="category-count">2</div>
             </a>
         
-            <a class="category-link" href="/categories/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/">
-                源码阅读
+            <a class="category-link" href="/categories/%E5%85%B6%E4%BB%96/">
+                其他
                 <div class="category-count">1</div>
             </a>
         </div>
@@ -236,8 +236,10 @@
 <p>etcd的raft实现地址<a target="_blank" rel="noopener" href="https://github.com/etcd-io/raft">https://github.com/etcd-io/raft</a></p>
 <p>与MIT6.824给出的raft相比，etcd有以下不一样的地方：</p>
 <h2 id="状态机架构：单线程事件循环与无锁设计"><a href="#状态机架构：单线程事件循环与无锁设计" class="headerlink" title="状态机架构：单线程事件循环与无锁设计"></a><strong>状态机架构：单线程事件循环与无锁设计</strong></h2><p>最显著的差异是 etcd 的状态机是没有加锁的，而是采用了单线程事件循环，这种设计避免了并发访问状态带来的竞态与锁复杂度。所有外部操作（提案、配置变更、网络消息、时钟Tick）都通过各自的 Go Channel 发送到一个专用的 goroutine 中串行处理。因此所有状态机的修改都在这个单一线程中原子执行，从根本上避免了数据竞争和死锁问题。</p>
-<p>消息通过隔离，在一个run方法监听所有通道：</p>
+<p>所有对状态机的访问通过不同的channel 隔离，接着在一个run方法监听所有通道</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">// node is the canonical implementation of the Node interface</span><br><span class="line">type node struct &#123;</span><br><span class="line">	propc      chan msgWithResult      // 提案消息</span><br><span class="line">	recvc      chan pb.Message         // 接收到的网络消息</span><br><span class="line">	confc      chan pb.ConfChangeV2    // 配置变更</span><br><span class="line">	confstatec chan pb.ConfState</span><br><span class="line">	readyc     chan Ready              // Ready 通知</span><br><span class="line">	advancec   chan struct&#123;&#125;           // Advance 通知</span><br><span class="line">	tickc      chan struct&#123;&#125;           // Tick 时钟</span><br><span class="line">	done       chan struct&#123;&#125;</span><br><span class="line">	stop       chan struct&#123;&#125;</span><br><span class="line">	status     chan chan Status</span><br><span class="line"></span><br><span class="line">	rn *RawNode</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
 
 
 

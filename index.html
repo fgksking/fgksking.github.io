@@ -149,8 +149,8 @@
     <div class="widget">
       <h3 class="widget-title">分类</h3>
       <div class="category-box">
-            <a class="category-link" href="/categories/%E5%85%B6%E4%BB%96/">
-                其他
+            <a class="category-link" href="/categories/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/">
+                源码阅读
                 <div class="category-count">1</div>
             </a>
         
@@ -159,8 +159,8 @@
                 <div class="category-count">2</div>
             </a>
         
-            <a class="category-link" href="/categories/%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/">
-                源码阅读
+            <a class="category-link" href="/categories/%E5%85%B6%E4%BB%96/">
+                其他
                 <div class="category-count">1</div>
             </a>
         </div>
@@ -232,8 +232,8 @@
 etcd的raft实现地址https://github.com/etcd-io/raft
 与MIT6.824给出的raft相比，etcd有以下不一样的地方：
 状态机架构：单线程事件循环与无锁设计最显著的差异是 etcd 的状态机是没有加锁的，而是采用了单线程事件循环，这种设计避免了并发访问状态带来的竞态与锁复杂度。所有外部操作（提案、配置变更、网络消息、时钟Tick）都通过各自的 Go Channel 发送到一个专用的 goroutine 中串行处理。因此所有状态机的修改都在这个单一线程中原子执行，从根本上避免了数据竞争和死锁问题。
-消息通过隔离，在一个run方法监听所有通道：
-123456789101112131415// node is the canonical implementation of the Node interfacetype nod...
+所有对状态机的访问通过不同的channel 隔离，接着在一个run方法监听所有通道
+123456789101112131415// node is the canonical implementation of the Nod...
             
           </div>
         
